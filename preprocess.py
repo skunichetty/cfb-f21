@@ -33,7 +33,7 @@ def build_games_data(years: List[str]):
     for year in years[1:]:
         temp = pd.read_json("./data/raw_data/%s.json" % year)
         df = df.append(temp)
-    df.to_csv("./data/games.csv")
+    df.to_csv("./data/games.csv", index=False)
 
 
 def fetch_game_stats(fname: str):
@@ -77,10 +77,12 @@ def fetch_game_stats(fname: str):
     for file in os.scandir("./data/raw_data/temp"):
         temp = pd.read_csv(file.path)
         if overall_stats is not None:
-            overall_stats = overall_stats.append(temp)
+            overall_stats = overall_stats.append(temp, ignore_index=True)
         else:
             overall_stats = temp
-    overall_stats.to_csv("./data/game_stats.csv")
+    overall_stats = overall_stats.drop(["teams"], axis=1)
+    overall_stats = overall_stats.drop(["Unnamed: 0"], axis=1)
+    overall_stats.to_csv("./data/game_stats.csv", index=False)
 
 
 if not os.access("./data/raw_data/2013.json", os.F_OK):
