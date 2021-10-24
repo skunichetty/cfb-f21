@@ -1,5 +1,6 @@
 config.py
 __pycache__
 venv
-raw_data
 reference
+.vscode
+temp
