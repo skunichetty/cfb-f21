@@ -19,15 +19,14 @@ from typing import List
 
 
 def efficiencyFormatter(df):
-    # Author -  Michael West (@Season5Ryze on github)
-    # Read data, drop rows that have NaN values for our data
+    # Original Author -  Michael West (@Season5Ryze on github)
+    # Edited by Sachchit Kunichetty to fit new data generation algorithm
+
     df_stats = df
-    # Create NumPy arrays for each of our column's values
     home_third_down = df_stats.loc[:, "home.thirdDownEff"].values
     away_third_down = df_stats.loc[:, "away.thirdDownEff"].values
     home_fourth_down = df_stats.loc[:, "home.fourthDownEff"].values
-    away_fourth_down = df_stats.loc[:, "away.thirdDownEff"].values
-    # Debug third down issue: print(df_stats["away.thirdDownEff"])
+    away_fourth_down = df_stats.loc[:, "away.fourthDownEff"].values
 
     # Remove problematic index
     away_third_down = np.delete(away_third_down, [0])
@@ -35,19 +34,21 @@ def efficiencyFormatter(df):
     # Loop that parses given array and converts each value into a float of X/Y where the format of the string is "XX-YY"
     def convEff(down_array):
         for index, item in enumerate(down_array):
-            # Debug error in specific ojects: print("Index: ", index, "\n", "Item: ", item)
-            if item[0] == "0":
-                down_array[index] = 0
-            elif len(item) == 3 and item[0] != "0":
-                down_array[index] = float(item[0]) / float(item[2])
-            elif len(item) == 4:
-                down_array[index] = float(item[0]) / (
-                    float(item[2]) * 10 + float(item[3])
-                )
-            elif len(item) == 5:
-                down_array[index] = (float(item[0]) * 10 + float(item[1])) / (
-                    float(item[3]) * 10 + float(item[4])
-                )
+            if item is not np.nan:
+                if item[0] == "0":
+                    down_array[index] = 0
+                elif len(item) == 3 and item[0] != "0":
+                    down_array[index] = float(item[0]) / float(item[2])
+                elif len(item) == 4:
+                    down_array[index] = float(item[0]) / (
+                        float(item[2]) * 10 + float(item[3])
+                    )
+                elif len(item) == 5:
+                    down_array[index] = (
+                        float(item[0]) * 10 + float(item[1])
+                    ) / (float(item[3]) * 10 + float(item[4]))
+            else:
+                down_array[index] = np.nan
         return down_array
 
     # Run function on each numpy array
@@ -201,7 +202,7 @@ def fetch_game_stats(
             overall_stats = temp
         else:
             overall_stats = overall_stats.append(temp)
-    # overall_stats = efficiencyFormatter(overall_stats)
+    overall_stats = efficiencyFormatter(overall_stats)
     overall_stats.to_csv(output_path, index=False)
 
 
