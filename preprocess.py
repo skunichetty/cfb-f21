@@ -14,6 +14,7 @@ import numpy as np
 from config import cfbkey
 import json
 import os
+import argparse
 
 from typing import List
 
@@ -21,7 +22,6 @@ from typing import List
 def efficiencyFormatter(df):
     # Original Author -  Michael West (@Season5Ryze on github)
     # Edited by Sachchit Kunichetty to fit new data generation algorithm
-
     df_stats = df
     home_third_down = df_stats.loc[:, "home.thirdDownEff"].values
     away_third_down = df_stats.loc[:, "away.thirdDownEff"].values
@@ -34,7 +34,7 @@ def efficiencyFormatter(df):
     # Loop that parses given array and converts each value into a float of X/Y where the format of the string is "XX-YY"
     def convEff(down_array):
         for index, item in enumerate(down_array):
-            if item is not np.nan:
+            if item is not (np.nan or None):
                 if item[0] == "0":
                     down_array[index] = 0
                 elif len(item) == 3 and item[0] != "0":
@@ -145,7 +145,7 @@ def fetch_game_stats(
             if overall_stats is None:
                 overall_stats = temp
             else:
-                overall_stats = overall_stats.append(temp)
+                overall_stats = overall_stats.append(temp, ignore_index=True)
             print("Skipped cached data: {}".format(formatted_cached_file_addr))
             continue
         week = 1
@@ -201,7 +201,7 @@ def fetch_game_stats(
         if overall_stats is None:
             overall_stats = temp
         else:
-            overall_stats = overall_stats.append(temp)
+            overall_stats = overall_stats.append(temp, ignore_index=True)
     overall_stats = efficiencyFormatter(overall_stats)
     overall_stats.to_csv(output_path, index=False)
 
@@ -246,7 +246,7 @@ def getRecruitingRankings(years):
     df.to_csv("./data/recruiting_ranks.csv", index=False)
 
 
-def main():
+def main(clear_cache=False):
     if not os.access("./data/temp/", os.F_OK):
         os.mkdir("./data/temp")
     if not os.access("./data/temp/games", os.F_OK):
@@ -271,13 +271,16 @@ def main():
     if not os.access("./data/team_ids.json", os.F_OK):
         genTeamIds(years)
     print("-----Generating games.csv-----")
-    fetch_games(effective_years)
+    fetch_games(effective_years, clear_cache)
     print("-----Generating game_stats.csv-----")
-    fetch_game_stats(effective_years)
+    fetch_game_stats(effective_years, clear_cache)
     print("-----Generating recruiting_ranks.csv-----")
     if not os.access("./data/recruiting_ranks.csv", os.F_OK):
         getRecruitingRankings(years)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--clear", action="store_true")
+    args = parser.parse_args()
+    main(args.clear)
